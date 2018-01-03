@@ -1,0 +1,38 @@
+{
+	"crashers": [
+		{
+		    "id": 2,
+		    "key": 2,
+			"forum": "Ilona",
+			"name": "Ilona Ciunaite",
+			"role": "guide",
+			"location": "Playa del Carmen, Quintana Roo, Mexico",
+			"geo": {
+			     "latitude": 20.6296,
+			     "longitude": -87.0739
+			     }
+		},
+		{
+		    "id": 48,
+		    "key": 48,
+			"forum": "jjm109",
+			"name": "James Myers",
+			"role": "crasher",
+			"location": "Paradise, CA, USA",
+			"geo": {
+    			"latitude": 39.7596,
+	       		"longitude": -121.6219
+	       		}
+		},
+        {
+            "id": 10851,
+            "key": 10851,
+            "forum": "forgetmenot",
+            "name": "Kay Nieminen",
+            "role": "guide",
+            "location": "Australia"
+        }
+	],
+	"description": "LU Crashers.",
+	"name": "LU Crashers"
+}
