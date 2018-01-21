@@ -44,6 +44,12 @@ import {MatSliderModule} from '@angular/material';
                 min="100" max="20000" step="100" value="200">
             </mat-slider>
             </div>
+            <div>
+             Limit to {{ searchLimit }} closest:
+            <mat-slider [(ngModel)]="searchLimit" (input)="this.onLimitChange($event)"
+                min="10" max="100" step="10" value="20">
+            </mat-slider>
+            </div>
             <h2>Search near selected user</h2>
             <div>
                 <mat-form-field *ngIf="selectOptions">
@@ -56,6 +62,8 @@ import {MatSliderModule} from '@angular/material';
                 </mat-form-field>
             </div>
           <ngui-map center="{{ mapCenter }}"
+             (mapReady$)="onInit($event)"
+             (idle)="onIdle($event)"
             [zoom]="3"
             [zoomControlOptions]="{position: 'TOP_CENTER'}"
             [fullscreenControl]="true"
@@ -71,13 +79,14 @@ import {MatSliderModule} from '@angular/material';
                     <a href="{{ infoWindow.profileUrl }}">{{ infoWindow.forum_name }} @ {{ infoWindow.location }}</a>
                 </div>
             </info-window>
-          </ngui-map>
-
-          `
+          </ngui-map>          `
       })
 
 export class AppComponent {
-    mapCenter = [];
+    lat = 20.0;
+    lng = -20.0;
+    mapCenter = {lat: this.lat, lng: this.lng};
+    map;
     foundUser = false;
     searchLocation: string;
     searchUser: string;
@@ -85,6 +94,7 @@ export class AppComponent {
     selectedLocation = 0;
     searchErrorMessage: string;
     searchRadius = 50;
+    searchLimit = 20;
     loadSearchUser = '/app.php/mapusers/xhr/searchUser';
     loadSearchLocation = '/app.php/mapusers/xhr/searchLocation';
     initItems: any;
@@ -99,8 +109,6 @@ export class AppComponent {
     users;
     items: any[] = [];
     rawItems: any[];
-    lat = 20.0;
-    lng = -20.0;
     info = {
             id: 0,
             display: false,
@@ -123,6 +131,28 @@ export class AppComponent {
             label: null,
     };
 
+    onInit(map) {
+        this.map = map;
+        this.fitBounds(this.map);
+    }
+    fitBounds(map) {
+        if (!map) {
+            return;
+        }
+        // console.log('fitBounds map=', map);
+        if (map.markers) {
+            const bounds = new google.maps.LatLngBounds();
+            // console.log('map.markers=', map.markers);
+            map.markers.forEach(marker => {
+              /// console.log('set bounds for marker=', marker);
+              bounds.extend(marker.position);
+              // console.log('Extend bounds=', bounds);
+            });
+            // console.log('Fit map to bounds=', bounds);
+            map.fitBounds(bounds);
+        }
+    }
+
     log(event, str) {
         if (event instanceof MouseEvent) {
           return false;
@@ -130,12 +160,10 @@ export class AppComponent {
         console.log('event .... >', event, str);
     }
 
-    onMapReady(map) {
-        console.log('map', map);
-        console.log('markers', map.markers);  // to get all markers as an array
-    }
     onIdle(event) {
-        console.log('map', event.target);
+        // console.log('map idle ', event.target);
+        this.map = event.target;
+        this.fitBounds(this.map);
     }
     onMarkerInit(marker) {
         console.log('marker', marker);
@@ -151,9 +179,9 @@ export class AppComponent {
         const thisLoc = this.users.find(k => Number(k.id) === Number(this.selectedLocation));
         console.log('thisLoc(', this.selectedLocation, ')=', thisLoc);
         if (thisLoc.geo.latitude) {
-            this.mapCenter = [Number(thisLoc.geo.latitude), Number(thisLoc.geo.longitude)];
+            this.mapCenter = {lat: Number(thisLoc.geo.latitude), lng: Number(thisLoc.geo.longitude)};
         } else {
-            this.mapCenter = [this.lat, this.lng];
+            this.mapCenter = {lat: this.lat, lng: this.lng};
         }
         console.log('mapCenter=', this.mapCenter);
     }
@@ -167,7 +195,8 @@ export class AppComponent {
         let params = null;
         if (this.searchUser) {
             params = new HttpParams().set('name', this.searchUser)
-                .set('radius', String(this.searchRadius));
+                .set('radius', String(this.searchRadius))
+                .set('limit', String(this.searchLimit));
             console.log('doSearchUser params=', params);
         }
         this.http.get(this.loadSearchUser, {params: params, headers: headers})
@@ -181,9 +210,9 @@ export class AppComponent {
                     // this.positions.push({latlng: [Number(this.info.geo.latitude), Number(this.info.geo.longitude)], item: this.info});
                     console.log('initial position=', this.positions);
                     if (this.info.geo.latitude) {
-                        this.mapCenter = [Number(this.info.geo.latitude), Number(this.info.geo.longitude)];
+                        this.mapCenter = {lat: Number(this.info.geo.latitude), lng: Number(this.info.geo.longitude)};
                     } else {
-                        this.mapCenter = [this.lat, this.lng];
+                        this.mapCenter = {lat: Number(this.lat), lng: Number(this.lng)};
                     }
                     console.log('mapCenter=', this.mapCenter);
                     this.foundUser = true;
@@ -216,7 +245,8 @@ export class AppComponent {
         let params = null;
         if (center) {
             params = new HttpParams().set('address', center)
-                .set('radius', String(this.searchRadius));
+                .set('radius', String(this.searchRadius))
+                .set('limit', String(this.searchLimit));
             console.log('reload params=', params);
         }
         this.http.get(this.loadSearchLocation, {params: params, headers: headers})
@@ -230,7 +260,7 @@ export class AppComponent {
                     for (const item of items) {
                         // console.log('insert new ', item);
                         if (firstItem) {
-                            this.mapCenter = [Number(item.geo.latitude), Number(item.geo.longitude)];
+                            this.mapCenter = {lat: Number(item.geo.latitude), lng: Number(item.geo.longitude)};
                             firstItem = false;
                         }
                         this.getIconUrl(item);
@@ -250,6 +280,8 @@ export class AppComponent {
                         this.selectOptions.push([item.id, item.forum, item.iconUrl]);
                         // this.updateItem(item, true);
                     }
+                    // map won't have markers yet, so wait a bit to set bounds
+                    this.fitBounds(this.map);
                     // console.log('selectOptions=', this.selectOptions);
                 },
                 (err: HttpErrorResponse) => {
@@ -270,6 +302,11 @@ export class AppComponent {
             console.log('radius=', this.searchRadius);
     }
 
+    onLimitChange(event: any) {
+        console.log(event);
+        console.log('limit=', this.searchLimit);
+}
+
     markerClicked(event, marker) {
         // console.log('clicked marker event=', event, ', marker=', marker);  // marker is {latlng, item}
         this.infoWindow.geo = {latitude: event.target.getPosition().lat(),
@@ -280,7 +317,7 @@ export class AppComponent {
         this.infoWindow.profileUrl = '/memberlist.php?mode=viewprofile&u=' + marker.item.id;
         this.infoWindow.display = true;
         console.log('info=', this.infoWindow);
-        this.mapCenter = [Number(this.infoWindow.geo.latitude), Number(this.infoWindow.geo.longitude)];
+        this.mapCenter = {lat: Number(this.infoWindow.geo.latitude), lng: Number(this.infoWindow.geo.longitude)};
         // console.log('infoWindows=', event.target.nguiMapComponent.infoWindows);
         event.target.nguiMapComponent.openInfoWindow('iw-user', event.target);
     }
