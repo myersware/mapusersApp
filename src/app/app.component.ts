@@ -77,6 +77,7 @@ import {MatSliderModule} from '@angular/material';
             <info-window id="iw-user">
                 <div *ngIf="infoWindow.display">
                     <a href="{{ infoWindow.profileUrl }}">{{ infoWindow.forum_name }} @ {{ infoWindow.location }}</a>
+                    <br>Distance: {{ infoWindow.distance }} km
                 </div>
             </info-window>
           </ngui-map>          `
@@ -125,6 +126,7 @@ export class AppComponent {
             forum_name: null,
             color: null,
             geo: null,
+            distance: null,
             location: null,
             iconUrl: null,
             profileUrl: null,
@@ -148,6 +150,13 @@ export class AppComponent {
               bounds.extend(marker.position);
               // console.log('Extend bounds=', bounds);
             });
+         // Don't zoom in too far on only one marker
+            if (bounds.getNorthEast().equals(bounds.getSouthWest())) {
+               const extendPoint1 = new google.maps.LatLng(bounds.getNorthEast().lat() + 0.1, bounds.getNorthEast().lng() + 0.01);
+               const extendPoint2 = new google.maps.LatLng(bounds.getNorthEast().lat() - 0.1, bounds.getNorthEast().lng() - 0.01);
+               bounds.extend(extendPoint1);
+               bounds.extend(extendPoint2);
+            }
             // console.log('Fit map to bounds=', bounds);
             map.fitBounds(bounds);
         }
@@ -163,7 +172,7 @@ export class AppComponent {
     onIdle(event) {
         // console.log('map idle ', event.target);
         this.map = event.target;
-        this.fitBounds(this.map);
+         // this.fitBounds(this.map);
     }
     onMarkerInit(marker) {
         console.log('marker', marker);
@@ -281,7 +290,10 @@ export class AppComponent {
                         // this.updateItem(item, true);
                     }
                     // map won't have markers yet, so wait a bit to set bounds
-                    this.fitBounds(this.map);
+                    setTimeout(() => {
+                        console.log('Async Task Calling Callback');
+                        this.fitBounds(this.map);
+                      }, 500);
                     // console.log('selectOptions=', this.selectOptions);
                 },
                 (err: HttpErrorResponse) => {
@@ -311,6 +323,7 @@ export class AppComponent {
         // console.log('clicked marker event=', event, ', marker=', marker);  // marker is {latlng, item}
         this.infoWindow.geo = {latitude: event.target.getPosition().lat(),
                 longitude: event.target.getPosition().lng()};
+        this.infoWindow.distance = Number(marker.item.distance).toFixed(2);
         this.infoWindow.forum_name = marker.item.forum;
         this.infoWindow.label = marker.item.label;
         this.infoWindow.location = marker.item.location;
