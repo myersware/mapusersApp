@@ -6,7 +6,9 @@
 			"forum": "Ilona",
 			"name": "Ilona Ciunaite",
 			"role": "guide",
+			"color": "red",
 			"location": "Playa del Carmen, Quintana Roo, Mexico",
+			"distance": 5000,
 			"geo": {
 			     "latitude": 20.6296,
 			     "longitude": -87.0739
@@ -18,7 +20,9 @@
 			"forum": "jjm109",
 			"name": "James Myers",
 			"role": "crasher",
+			"color": "blue",
 			"location": "Paradise, CA, USA",
+			"distance": 0,
 			"geo": {
     			"latitude": 39.7596,
 	       		"longitude": -121.6219
@@ -30,7 +34,9 @@
             "forum": "forgetmenot",
             "name": "Kay Nieminen",
             "role": "guide",
-            "location": "Australia"
+            "color": "red",
+            "location": "Australia",
+            "distance": 15000
         }
 	],
 	"description": "LU Crashers.",
