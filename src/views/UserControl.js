@@ -1,43 +1,23 @@
 var m = require("mithril")
 const {Form, Field, ValidationError} = require("powerform")
-const {validatex, SkipValidation, minLength, required, equalsTo} = require("validatex")
-
-class UsernameField extends Field {
-		  validate(value, allValues) {
-		    if(!value) {
-		      throw new ValidationError("This field is required.")
-		    }
-		  }
-		}
+// const {validate, SkipValidation, minLength, required, equalsTo} = require("validatex")
 
 class UserControl {
 	constructor() {
 		console.log('UserControl constructor')
-	    this.form = Form.new({
-			username : {
-				default : "",
-				validatexx : [
-					required(true)
-				],
-				validate(value, allValues) {
-					console.log("validate username")
-				    if(!value) {
-				      throw new ValidationError("This field is required.")
-				    }
-				  }
-			},
-			password : {
-				default : "",
-				validate : required(true)
-			},
-			confirmPassword : {
-				default : "",
-				validate : [
-					required(true),
-					equalsTo("password")
-				]
+
+	    class UsernameField extends Field {
+			validate(value, allValues) {
+				console.log("values = ", value, allValues)
+				if(!value) {
+					throw new ValidationError("This field is required.")
+				}
 			}
-	    })
+			setValue = function(value) {
+				console.log('set un=', value)
+				this.setData(value)
+			}
+		}
 		
 		class PasswordField extends Field {
 		  validate(value, allValues) {
@@ -46,43 +26,34 @@ class UserControl {
 		      throw new ValidationError("This field must be at least 8 characters long.")
 		    }
 		  }
+		  setValue = function(value) {
+				console.log('set pw=', value)
+				this.setData(value)
+			}
 		}
 		
 		class ConfirmPasswordField extends Field {
 		  validate(value, allValues) {
-		    if (value !== allValues[this.config.passwordField]) {
+		    if (value == undefined || value !== allValues[this.config.passwordField]) {
 		      throw new ValidationError("Passwords do not match.")
 		    }
 		  }
-		}
-		class SignupForm extends Form {
-			username = UsernameField.new()
+		  setValue = function(value) {
+				console.log('set cp=', value)
+				this.setData(value)
+			}
 		}
 		
-		this.form = SignupForm.new({
-				username: UsernameField.new({
-				default : "",
-				validatexx : [
-					required(true)
-				],
-					validate(value, allValues) {
-						console.log("validate username")
-						if(!value) {
-							throw new ValidationError("This field is required.")
-						}
-				  	}
-				}),
-				password: PasswordField.new({
-					default : "",
-					validate : required(true)
-				}),
-				confirmPassword: ConfirmPasswordField.new({passwordField: 'password'})
+		class SignupForm extends Form {
+			  username = UsernameField.new()
+			  password = PasswordField.new()
+			  confirmPassword = ConfirmPasswordField.new({field: 'password'})
 			}
-		)
+		this.form = SignupForm.new()
 
 		this.submit = function() { // this -> class
 			console.log("UserControl submit, this=", this)
-			const form = this.form.config
+			const form = this.form
 			this.submitFailed = false; // reset
 			console.log("form isValid=", this.form.isValid())
 			if (!this.form.isValid()) {
@@ -100,8 +71,8 @@ class UserControl {
 	  }
 
 	view() {
-		const form = this.form.config
-		console.log("UserControl view, form=", this.form.config)
+		const form = this.form
+		console.log("UserControl view, form=", this.form)
 		const errors = this.form.getError();
 		const submitFailed = this.submitFailed;
 		const formErrors = form.formErrors;
@@ -117,28 +88,28 @@ class UserControl {
 						m("input", {
 							name : "username",
 							placeholder : "Username",
-							oninput : m.withAttr("value", form.username),
+							oninput : m.withAttr("value", form.username.setValue, form.username),
 							onchange : form.username.isValid
 						}),
-						this.submitFailed && !form.username.isValid() && m("p.error", form.username.error()),
+						this.submitFailed && !form.username.isValid() && m("p.error", form.username.getError()),
 					]),
 					m(".row", [
 						m("input", {
 							name : "password",
 							placeholder : "Password",
-							oninput : m.withAttr("value", form.password),
+							oninput : m.withAttr("value", form.password.setValue, form.password),
 							onchange : form.password.isValid
 						}),
-						this.submitFailed && !form.password.isValid() && m("p.error", form.password.error()),
+						this.submitFailed && !form.password.isValid() && m("p.error", form.password.getError()),
 					]),
 					m(".row", [
 						m("input", {
 							name : "confirmPassword",
 							placeholder : "Confirm password",
-							oninput : m.withAttr("value", form.confirmPassword),
+							oninput : m.withAttr("value", form.confirmPassword.setValue, form.confirmPassword),
 							onchange : form.confirmPassword.isValid
 						}),
-						this.submitFailed && !form.confirmPassword.isValid() && m("p.error", form.confirmPassword.error()),
+						this.submitFailed && !form.confirmPassword.isValid() && m("p.error", form.confirmPassword.getError()),
 					]),
 					m(".row", [
 						m("button", {
