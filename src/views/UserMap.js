@@ -11,6 +11,7 @@ var UserMap = {
 	title: "page title",
 	distance: 100,
 	positions: [],
+	markers: [],
 	info: {
 		id: 4,
         display: false,
@@ -99,7 +100,13 @@ var UserMap = {
         });
         infowindow.open(context.map, marker.gmMarker);
     },
+    setMapOnAll: function(map) {
+        for (var i = 0; i < this.markers.length; i++) {
+          this.markers[i].setMap(map);
+        }
+      },
 	onupdate: function(vnode) {
+		console.log('onupdate map')
 		var opts = {
 				center: new google.maps.LatLng(0,0),
 				zoom: 4,
@@ -107,12 +114,14 @@ var UserMap = {
 			}
 		vnode.state.map = new google.maps.Map(document.getElementById("user-map"), opts)
 		vnode.state.map.addListener('center_changed', function() {
-	          console.log("center_changed")
-	        });
+			console.log("center_changed")
+		})
+		this.positions = []
+		this.setMapOnAll(null)  // clear all markers from map
 		var items = User.list;
 		let firstItem = true;
         for (const item of items) {
-            console.log('insert new ', item);
+            console.log('insert new ', item)
             if (firstItem) {
                 this.mapCenter = {lat: Number(item.geo.latitude), lng: Number(item.geo.longitude)};
                 firstItem = false;
@@ -128,7 +137,7 @@ var UserMap = {
 	                    location: item.location,
 	                    iconUrl: this.getIconUrl(item),
 	                    label: null,
-	            };
+	            }
 	            if (item.geo.latitude) {
 	            	var pos = {lat: Number(item.geo.latitude), lng: Number(item.geo.longitude)}
 	                this.positions.push(pos);
@@ -141,6 +150,7 @@ var UserMap = {
 	                    markerContext: this
 	                  });
 	                marker.gmMarker = marker
+	                this.markers.push(marker)  // add to list
 	                google.maps.event.addListener(marker, 'click', this.markerClicked);
 	            }
             }
@@ -154,23 +164,20 @@ var UserMap = {
           }, 500);
     },
 	view: function(vnode) {
-		return m(".user-map-div", 
+		return m("#user-map", 
 				[
-					  m("h1", "Forum User Locations"),
-					  m("#user-form", m(UserControl)),
-					  m("#user-map", ""),
-					  m(".user-map-info", 
-					    m("div",
-					    		[
-					                m("a", {href: vnode.state.info.profileUrl + vnode.state.info.id},
-					                		vnode.state.info.forum_name, "@", vnode.state.info.location
-					                ),
-					                m("br"),
-					                m("span", "Distance: ", vnode.state.info.distance, " km")
-					              ]
-					        )
-					    )
-					]
+				  m(".user-map-info", 
+				    m("div",
+				    		[
+				                m("a", {href: vnode.state.info.profileUrl + vnode.state.info.id},
+				                		vnode.state.info.forum_name, "@", vnode.state.info.location
+				                ),
+				                m("br"),
+				                m("span", "Distance: ", vnode.state.info.distance, " km")
+				              ]
+				        )
+				    )
+				]
 		)
 	}
 }

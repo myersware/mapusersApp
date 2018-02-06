@@ -1,6 +1,6 @@
 //src/index.js
 var m = require("mithril")
 
-var UserMap = require("./views/UserMap")
+var UserMapPage = require("./views/UserMapPage")
 
-m.mount(document.body, UserMap)
+m.mount(document.body, UserMapPage)

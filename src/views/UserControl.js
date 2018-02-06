@@ -1,56 +1,45 @@
 var m = require("mithril")
 const {Form, Field, ValidationError} = require("powerform")
-// const {validate, SkipValidation, minLength, required, equalsTo} = require("validatex")
+import { RaisedButton, Slider } from "polythene-mithril"
+import "polythene-css/dist/polythene.css"   // Component CSS
+import "polythene-css/dist/polythene-typography.css"  // Default Material Design styles including Roboto font
 
 class UserControl {
 	constructor() {
 		console.log('UserControl constructor')
 
-	    class UsernameField extends Field {
-			validate(value, allValues) {
-				console.log("values = ", value, allValues)
-				if(!value) {
-					throw new ValidationError("This field is required.")
-				}
-			}
+		class SearchUserField extends Field {
 			setValue = function(value) {
-				console.log('set un=', value)
+				console.log('set searchUser=', value)
 				this.setData(value)
 			}
 		}
-		
-		class PasswordField extends Field {
-		  validate(value, allValues) {
-		    if (!value) throw new ValidationError("This field is required.")
-		    if(value.length < 8) {
-		      throw new ValidationError("This field must be at least 8 characters long.")
-		    }
-		  }
-		  setValue = function(value) {
-				console.log('set pw=', value)
+		class SearchLocationField extends Field {
+			setValue = function(value) {
+				console.log('set searchLoc=', value)
 				this.setData(value)
 			}
 		}
-		
-		class ConfirmPasswordField extends Field {
-		  validate(value, allValues) {
-		    if (value == undefined || value !== allValues[this.config.passwordField]) {
-		      throw new ValidationError("Passwords do not match.")
-		    }
-		  }
-		  setValue = function(value) {
-				console.log('set cp=', value)
+		class SearchRadius extends Field {
+			setValue = function(value) {
+				console.log('set searchRadius=', value)
 				this.setData(value)
 			}
 		}
-		
-		class SignupForm extends Form {
-			  username = UsernameField.new()
-			  password = PasswordField.new()
-			  confirmPassword = ConfirmPasswordField.new({field: 'password'})
+		class SearchLimit extends Field {
+			setValue = function(value) {
+				console.log('set searchLimit=', value)
+				this.setData(value)
 			}
-		this.form = SignupForm.new()
-
+		}
+		class SearchForm extends Form {
+			searchUser = SearchUserField.new()
+			searchLocation = SearchLocationField.new()
+			searchRadius = SearchRadius.new()
+			searchLimit = SearchLimit.new()
+		}
+		
+		this.form = SearchForm.new()
 		this.submit = function() { // this -> class
 			console.log("UserControl submit, this=", this)
 			const form = this.form
@@ -83,39 +72,68 @@ class UserControl {
 					onsubmit : this.submit.bind(this)
 				},
 				[
-					m("h1", "Sign up"),
 					m(".row", [
 						m("input", {
-							name : "username",
-							placeholder : "Username",
-							oninput : m.withAttr("value", form.username.setValue, form.username),
-							onchange : form.username.isValid
+							name : "searchUser",
+							placeholder : "User forum name",
+							oninput : m.withAttr("value", form.searchUser.setValue, form.searchUser),
+							onchange : form.searchUser.isValid
 						}),
-						this.submitFailed && !form.username.isValid() && m("p.error", form.username.getError()),
+						this.submitFailed && !form.searchUser.isValid() && m("p.error", form.searchUser.getError()),
 					]),
 					m(".row", [
-						m("input", {
-							name : "password",
-							placeholder : "Password",
-							oninput : m.withAttr("value", form.password.setValue, form.password),
-							onchange : form.password.isValid
-						}),
-						this.submitFailed && !form.password.isValid() && m("p.error", form.password.getError()),
-					]),
-					m(".row", [
-						m("input", {
-							name : "confirmPassword",
-							placeholder : "Confirm password",
-							oninput : m.withAttr("value", form.confirmPassword.setValue, form.confirmPassword),
-							onchange : form.confirmPassword.isValid
-						}),
-						this.submitFailed && !form.confirmPassword.isValid() && m("p.error", form.confirmPassword.getError()),
-					]),
-					m(".row", [
-						m("button", {
+						m(RaisedButton, {
 							// onclick : this.submit
 							onclick: this.submit.bind(this),
-						}, "Send")
+							style: {
+					              backgroundColor: "blue",
+					              color: "white"
+					            }
+						}, "Search by forum user name")
+					]),
+					m(".row", [
+						m("input", {
+							name : "searchLocation",
+							placeholder : "Search location",
+							oninput : m.withAttr("value", form.searchLocation.setValue, form.searchLocation),
+							onchange : form.searchLocation.isValid
+						}),
+						this.submitFailed && !form.searchLocation.isValid() && m("p.error", form.searchLocation.getError()),
+					]),
+					m(".row", [
+						m("RaisedButton", {
+							// onclick : this.submit
+							onclick: this.submit.bind(this),
+							style: {
+					              backgroundColor: "blue",
+					              color: "white"
+					            }
+						}, "Search by location")
+					]),
+					m(".row", [
+						m(".title", "Radius(km)"),
+						m(".component", 
+						  m(Slider, {
+							  oninput : m.withAttr("value", form.searchRadius.setValue, form.searchRadius),
+							  min: 100,
+							  max: 25000,
+							  defaultValue: 200,
+							  stepSize: 100
+							})
+						)
+					])
+					,
+					m(".row", [
+						m(".title", "Limit to closest"),
+						m(".component", 
+						  m(Slider, {
+							  oninput : m.withAttr("value", form.searchLimit.setValue, form.searchLimit),
+							  min: 10,
+							  max: 100,
+							  defaultValue: 20,
+							  stepSize: 10
+							})
+						)
 					])
 				]
 			)

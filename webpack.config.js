@@ -1,5 +1,6 @@
 const path = require('path');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
+const ExtractTextPlugin = require("extract-text-webpack-plugin");
 
 var dir_js = path.resolve(__dirname, 'src');
 
@@ -11,7 +12,8 @@ module.exports = {
 			publicPath: "/bin/"
 		},
 	    plugins: [
-	    	new CleanWebpackPlugin(['bin/*.*'])
+	    	new CleanWebpackPlugin(['bin/app.*']),
+	    	new ExtractTextPlugin("styles.css"),
 	      ],
 	    module: {
 	    	rules: [
@@ -27,7 +29,14 @@ module.exports = {
 	    	          ]
 	    	        }
 	    	      }
-	    	    }
+	    	    },
+	    	    {
+	    	        test: /\.css$/,
+	    	        use: ExtractTextPlugin.extract({
+	    	          fallback: "style-loader",
+	    	          use: "css-loader"
+	    	        })
+	    	      }
 	    	  ]
 	    },
 		devtool: "source-map",
