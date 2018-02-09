@@ -1,11 +1,12 @@
 var m = require("mithril")
-var User = require("../models/User")
 var UserControl = require("./UserControl")
 var UserMap = require("./UserMap")
 
-var UserMapPage = {
-	view: function(vnode) {
-		return m(".user-map-div", 
+var UserMapPage = (function(){
+	let x = 0
+	function ctrl(vnode){ /*...*/ return; }
+	function view (vnode) {
+		return m("user-map-page", 
 				[
 					  m("h1", "Forum User Locations"),
 					  m("#user-form-div", m(UserControl)),
@@ -13,6 +14,7 @@ var UserMapPage = {
 					]
 		)
 	}
-}
+	return {view:view, oninit: ctrl};
+}());
 
 module.exports = UserMapPage

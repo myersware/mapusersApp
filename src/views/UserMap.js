@@ -1,17 +1,21 @@
 var m = require("mithril")
-var User = require("../models/User")
+var Users = require("../models/Users")
 var UserControl = require("./UserControl")
+var fontawesomeMarkers = require("fontawesome-markers")
 
 var UserMap = {
 	map: null,
 	lat: 20.0,
     lng: -20.0,
     mapCenter: {lat: this.lat, lng: this.lng},
-	url: "http://myersware.com",
-	title: "page title",
 	distance: 100,
+	searchLocation: null,
+	searchUser: null,
+	searchRadius: 100,
+	searchLimit: 20,
 	positions: [],
 	markers: [],
+	selectOptions: null,
 	info: {
 		id: 4,
         display: false,
@@ -35,7 +39,6 @@ var UserMap = {
             profileUrl: null,
             label: null,
     },
-	oninit: User.loadList,
 	fitBounds: function(map) {
         if (!map) {
             return;
@@ -61,18 +64,13 @@ var UserMap = {
         }
     },
     getIconUrl: function(item) {
-        item.label = {
-                fontFamily: 'Fontawesome',
-                text: '\uf041', // code for font-awesome icon
-                'font-size': '64px',
-                color: item.color
-        };
         item.icon = {
-            path: google.maps.SymbolPath.CIRCLE, // or any others
-            scale: 8,
-            strokeOpacity: 0.05
+        	path: fontawesomeMarkers.MAP_MARKER,
+            scale: 0.3,
+            strokeOpacity: 1,
+            fillColor: item.color,
+            fillOpacity: 0.7,
         };
-        // console.log('item.label=', item.label);
     },
     markerClicked: function(event) {
         console.log('clicked marker event=', this);
@@ -105,28 +103,16 @@ var UserMap = {
           this.markers[i].setMap(map);
         }
       },
-	onupdate: function(vnode) {
-		console.log('onupdate map')
-		var opts = {
-				center: new google.maps.LatLng(0,0),
-				zoom: 4,
-				mapTypeId: google.maps.MapTypeId.ROADMAP
-			}
-		vnode.state.map = new google.maps.Map(document.getElementById("user-map"), opts)
-		vnode.state.map.addListener('center_changed', function() {
-			console.log("center_changed")
-		})
-		this.positions = []
-		this.setMapOnAll(null)  // clear all markers from map
-		var items = User.list;
+    addMarkers: function(items) {
+		this.clearLocations()
 		let firstItem = true;
+		console.log('set markers for ', items)
         for (const item of items) {
             console.log('insert new ', item)
             if (firstItem) {
-                this.mapCenter = {lat: Number(item.geo.latitude), lng: Number(item.geo.longitude)};
+            	this.mapCenter = {lat: Number(item.geo.latitude), lng: Number(item.geo.longitude)};
                 firstItem = false;
             }
-            // this.getIconUrl(item);
             if (item.geo) {
 	            this.info = {id: item.id,
 	                    geo: {latitude: Number(item.geo.latitude),
@@ -140,11 +126,10 @@ var UserMap = {
 	            }
 	            if (item.geo.latitude) {
 	            	var pos = {lat: Number(item.geo.latitude), lng: Number(item.geo.longitude)}
-	                this.positions.push(pos);
+	            	this.positions.push(pos);
 	                var marker = new google.maps.Marker({
 	                    position: pos,
 	                    icon: item.icon,
-	                    label: item.label,
 	                    map: this.map,
 	                    markerInfo: item,
 	                    markerContext: this
@@ -157,28 +142,168 @@ var UserMap = {
             // this.selectOptions.push([item.id, item.forum, item.iconUrl]);
             // this.updateItem(item, true);
         }
-        // map won't have markers yet, so wait a bit to set bounds
-        setTimeout(() => {
-            console.log('Async Task Calling Callback');
-            this.fitBounds(this.map);
-          }, 500);
+		this.fitBounds(this.map)
+    },
+    clearLocations: function() {
+        console.log('clearLocations()');
+        this.positions = [];
+        this.info = null;
+        this.selectOptions = [];
+        this.selectOptions.push([0, 'none', '']);
+		this.setMapOnAll(null)  // clear all markers from map
+		this.markers = []
+    },
+    doSearchUser: function(attrs) {
+    	console.log("doSearchUser parms=", attrs)
+        this.searchErrorMessage = null;
+        Users.searchUsers({name: attrs.user, 
+        	radius: attrs.radius ? String(attrs.radius) : undefined, 
+        	limit: attrs.limit? String(attrs.limit) : undefined, 
+        	})
+        .then((result) => {
+            console.log("doSearchUser: ", result)
+            this.addMarkers(Users.list)
+        })
+        /*
+        this.http.get(this.loadSearchUser, {params: params, headers: headers})
+        .subscribe(
+                data => {
+                    console.log('getUser data=', data);
+                    this.info = data[0];
+                    // console.log('home info=', this.info);
+                    this.searchLocation = this.info.location;
+                    this.getIconUrl(this.info);
+                    // this.positions.push({latlng: [Number(this.info.geo.latitude), Number(this.info.geo.longitude)], item: this.info});
+                    console.log('initial position=', this.positions);
+                    if (this.info.geo.latitude) {
+                        this.mapCenter = {lat: Number(this.info.geo.latitude), lng: Number(this.info.geo.longitude)};
+                    } else {
+                        this.mapCenter = {lat: Number(this.lat), lng: Number(this.lng)};
+                    }
+                    console.log('mapCenter=', this.mapCenter);
+                    this.foundUser = true;
+                    this.doSearchLocation(this.searchLocation);
+                }, (err: HttpErrorResponse) => {
+                    if (err.error instanceof Error) {
+                        console.log('doSearchUser client error=', err);
+                        this.searchErrorMessage = err['error']['message'];
+                        this.foundUser = false;
+                      } else {
+                          console.log('doSearchUser server error=', err);
+                          this.searchErrorMessage = err['error']['message'];
+                          this.foundUser = false;
+                      }
+                    });
+                    */
+    },
+
+   /**
+    * @param center - either null or an address
+    */
+    doSearchLocation: function(center) {
+        console.log('reloading from Remote..., center=', center);
+        this.searchErrorMessage = null;
+        this.clearLocations();
+        let items;
+        /*
+        const headers = new HttpHeaders()
+            .set('X-Requested-With', 'XMLHttpRequest')
+            .set('responseType', 'json');
+        // console.log('added headers=', headers);
+        let params = null;
+        if (center) {
+            params = new HttpParams().set('address', center)
+                .set('radius', String(this.searchRadius))
+                .set('limit', String(this.searchLimit));
+            console.log('reload params=', params);
+        }
+        this.http.get(this.loadSearchLocation, {params: params, headers: headers})
+        .subscribe(
+                data => {
+                    console.log('remote data=', data);
+                    items = data;
+                    this.users = items;
+                    // console.log('load items=', items);
+                    let firstItem = true;
+                    for (const item of items) {
+                        // console.log('insert new ', item);
+                        if (firstItem) {
+                            this.mapCenter = {lat: Number(item.geo.latitude), lng: Number(item.geo.longitude)};
+                            firstItem = false;
+                        }
+                        this.getIconUrl(item);
+                        this.info = {id: item.id,
+                                geo: {latitude: Number(item.geo.latitude),
+                                    longitude: Number(item.geo.longitude)},
+                                display: true,
+                                color: item.color,
+                                forum_name: item.forum,
+                                location: item.location,
+                                iconUrl: item.iconUrl,
+                                label: null,
+                        };
+                        if (item.geo.latitude) {
+                            this.positions.push({latlng: [Number(item.geo.latitude), Number(item.geo.longitude)], item: item});
+                        }
+                        this.selectOptions.push([item.id, item.forum, item.iconUrl]);
+                        // this.updateItem(item, true);
+                    }
+                    // map won't have markers yet, so wait a bit to set bounds
+                    setTimeout(() => {
+                        console.log('Async Task Calling Callback');
+                        this.fitBounds(this.map);
+                      }, 500);
+                    // console.log('selectOptions=', this.selectOptions);
+                },
+                (err: HttpErrorResponse) => {
+                    if (err.error instanceof Error) {
+                        console.log('doSearchUser client error=', err);
+                        this.searchErrorMessage = err['error']['message'];
+                        this.foundUser = false;
+                      } else {
+                          console.log('doSearchUser server error=', err);
+                          this.searchErrorMessage = err['error']['message'];
+                          this.foundUser = false;
+                      }
+                    });
+                    */
+    },
+    search: function(searchParms) {
+		console.log("search map parms=", searchParms)
+		var opts = {
+				center: new google.maps.LatLng(20,-20),
+				zoom: 4,
+				mapTypeId: google.maps.MapTypeId.ROADMAP
+			}
+		this.map = new google.maps.Map(document.getElementById("user-map"), opts)
+		this.map.addListener('center_changed', function() {
+			console.log("center_changed")
+		})
+		this.clearLocations()
+		this.searchParms = searchParms  // for use in then statements
+		if (searchParms.location) {
+			this.doSearchLocation(this.searchParms).bind(this)
+		} else if (searchParms.user) {
+			this.doSearchUser(this.searchParms).bind(this)
+		}
+	},
+	oncreate: function(vnode) {
+		console.log('oncreate map')
+		var opts = {
+				center: new google.maps.LatLng(0,0),
+				zoom: 4,
+				mapTypeId: google.maps.MapTypeId.ROADMAP
+			}
+		this.map = new google.maps.Map(document.getElementById("user-map"), opts)
+		this.map.addListener('center_changed', function() {
+			console.log("center_changed")
+		})
+		Users.searchUsers().then(() => {
+			this.addMarkers(Users.list)
+		})
     },
 	view: function(vnode) {
-		return m("#user-map", 
-				[
-				  m(".user-map-info", 
-				    m("div",
-				    		[
-				                m("a", {href: vnode.state.info.profileUrl + vnode.state.info.id},
-				                		vnode.state.info.forum_name, "@", vnode.state.info.location
-				                ),
-				                m("br"),
-				                m("span", "Distance: ", vnode.state.info.distance, " km")
-				              ]
-				        )
-				    )
-				]
-		)
+		return m("#user-map", "")
 	}
 }
 

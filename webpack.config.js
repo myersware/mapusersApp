@@ -13,7 +13,7 @@ module.exports = {
 		},
 	    plugins: [
 	    	new CleanWebpackPlugin(['bin/app.*']),
-	    	new ExtractTextPlugin("styles.css"),
+	    	new ExtractTextPlugin("styles-bundle.css"),
 	      ],
 	    module: {
 	    	rules: [

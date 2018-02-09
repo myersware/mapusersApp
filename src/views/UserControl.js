@@ -1,47 +1,47 @@
 var m = require("mithril")
+var Stream = require("mithril/stream")
 const {Form, Field, ValidationError} = require("powerform")
-import { RaisedButton, Slider } from "polythene-mithril"
+import { RaisedButton, Slider, TextField } from "polythene-mithril"
 import "polythene-css/dist/polythene.css"   // Component CSS
 import "polythene-css/dist/polythene-typography.css"  // Default Material Design styles including Roboto font
+var UserMap = require("./UserMap")
 
 class UserControl {
 	constructor() {
 		console.log('UserControl constructor')
 
-		class SearchUserField extends Field {
-			setValue = function(value) {
-				console.log('set searchUser=', value)
-				this.setData(value)
+		class SearchForumField extends Field {
+			validate = function(value, allValues) {
+				console.log("validate forum name=", value)
 			}
 		}
 		class SearchLocationField extends Field {
-			setValue = function(value) {
-				console.log('set searchLoc=', value)
-				this.setData(value)
+			validate = function(value, allValues) {
+				console.log("validate location=", value)
 			}
 		}
 		class SearchRadius extends Field {
-			setValue = function(value) {
-				console.log('set searchRadius=', value)
-				this.setData(value)
+			validate = function(value, allValues) {
+				console.log("validate radius=", value)
 			}
 		}
 		class SearchLimit extends Field {
-			setValue = function(value) {
-				console.log('set searchLimit=', value)
-				this.setData(value)
+			validate = function(value, allValues) {
+				console.log("validate limit=", value)
 			}
 		}
 		class SearchForm extends Form {
-			searchUser = SearchUserField.new()
+			searchForum = SearchForumField.new()
 			searchLocation = SearchLocationField.new()
 			searchRadius = SearchRadius.new()
 			searchLimit = SearchLimit.new()
 		}
 		
 		this.form = SearchForm.new()
+		this.form.searchRadius.setData(200)
+		this.form.searchLimit.setData(20)
 		this.submit = function() { // this -> class
-			console.log("UserControl submit, this=", this)
+			console.log("UserControl submit, form=", this.form)
 			const form = this.form
 			this.submitFailed = false; // reset
 			console.log("form isValid=", this.form.isValid())
@@ -53,6 +53,10 @@ class UserControl {
 			// Send form data to API... but instead we will just show user feedback
 			this.submitted = true;
 			this.submitFailed = false;
+			UserMap.search({location: this.form.searchLocation.getData(), 
+				user: this.form.searchForum.getData(),
+				limit: this.form.searchLimit.getData(),
+				radius: this.form.searchRadius.getData()})
 			return false;
 		}
 		this.submitFailed = false
@@ -65,26 +69,27 @@ class UserControl {
 		const errors = this.form.getError();
 		const submitFailed = this.submitFailed;
 		const formErrors = form.formErrors;
-		return this.submitted
-			? m("h3", "You're done!")
-			: m("form",
+		return m("form",
 				{
 					onsubmit : this.submit.bind(this)
 				},
 				[
 					m(".row", [
-						m("input", {
-							name : "searchUser",
-							placeholder : "User forum name",
-							oninput : m.withAttr("value", form.searchUser.setValue, form.searchUser),
-							onchange : form.searchUser.isValid
-						}),
-						this.submitFailed && !form.searchUser.isValid() && m("p.error", form.searchUser.getError()),
-					]),
-					m(".row", [
+					      m(".component",
+					        m(TextField, {
+					        	label: "Forum user name",
+					          floatingLabel: true,
+					          onChange: newState => {console.log("forum_name=", newState.value); form.searchForum.setData(newState.value)},
+					          help: "Enter a forum user name"
+					        })
+					      )
+					    ]),
+				    m(".row", [
 						m(RaisedButton, {
-							// onclick : this.submit
-							onclick: this.submit.bind(this),
+							events: {
+								onclick: this.submit.bind(this),
+							},
+							disabled: !form.searchForum.getData(),
 							style: {
 					              backgroundColor: "blue",
 					              color: "white"
@@ -92,18 +97,21 @@ class UserControl {
 						}, "Search by forum user name")
 					]),
 					m(".row", [
-						m("input", {
-							name : "searchLocation",
-							placeholder : "Search location",
-							oninput : m.withAttr("value", form.searchLocation.setValue, form.searchLocation),
-							onchange : form.searchLocation.isValid
-						}),
-						this.submitFailed && !form.searchLocation.isValid() && m("p.error", form.searchLocation.getError()),
+					      m(".component",
+					        m(TextField, {
+					        	label: "Location",
+					        	floatingLabel: true,
+					        	onChange: newState => {console.log("location=", newState.value); form.searchLocation.setData(newState.value)},
+					        	help: "Enter a location"
+					        })
+					      )
 					]),
 					m(".row", [
-						m("RaisedButton", {
-							// onclick : this.submit
-							onclick: this.submit.bind(this),
+						m(RaisedButton, {
+							events: {
+								onclick: this.submit.bind(this),
+							},
+							disabled: !form.searchLocation.getData(),
 							style: {
 					              backgroundColor: "blue",
 					              color: "white"
@@ -114,7 +122,7 @@ class UserControl {
 						m(".title", "Radius(km)"),
 						m(".component", 
 						  m(Slider, {
-							  oninput : m.withAttr("value", form.searchRadius.setValue, form.searchRadius),
+							  onChange : ({ value }) => {console.log("radius=", value); form.searchRadius.setData(value)},
 							  min: 100,
 							  max: 25000,
 							  defaultValue: 200,
@@ -127,7 +135,7 @@ class UserControl {
 						m(".title", "Limit to closest"),
 						m(".component", 
 						  m(Slider, {
-							  oninput : m.withAttr("value", form.searchLimit.setValue, form.searchLimit),
+							  onChange : ({ value }) => {console.log("limit=", value); form.searchLimit.setData(value)},
 							  min: 10,
 							  max: 100,
 							  defaultValue: 20,

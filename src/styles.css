@@ -3,3 +3,6 @@
     height: 600px;
     width: 100%;
 }
+.fa-times-thin:before {
+    content: '\00d7';
+}
