@@ -11,12 +11,15 @@
   },
   "private": true,
   "dependencies": {
+    "@material/drawer": "^0.30.0",
+    "@material/toolbar": "^0.30.0",
     "es6-shim": "^0.35.3",
     "fontawesome-markers": "^4.6.1",
+    "material-components-web": "^0.30.0",
     "mithril": "^1.1.6",
     "polythene-css": "^1.0.0",
     "polythene-mithril": "^1.0.0",
-    "powerform": "^3.1.2",
+    "powerform": "^3.1.4",
     "validatex": "^0.3.1"
   },
   "devDependencies": {
@@ -41,7 +44,7 @@
     "karma-jasmine-html-reporter": "^0.2.2",
     "protractor": "~5.1.2",
     "style-loader": "^0.20.1",
-    "webpack": "^3.10.0",
+    "webpack": "^3.11.0",
     "webpack-dev-server": "^2.11.1",
     "webpack-watch-server": "^1.2.1"
   },

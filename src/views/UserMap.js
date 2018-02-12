@@ -68,7 +68,7 @@ var UserMap = {
         	path: fontawesomeMarkers.MAP_MARKER,
             scale: 0.3,
             strokeOpacity: 1,
-            fillColor: item.color,
+            fillColor: "#" + item.color,
             fillOpacity: 0.7,
         };
     },
@@ -156,117 +156,30 @@ var UserMap = {
     doSearchUser: function(attrs) {
     	console.log("doSearchUser parms=", attrs)
         this.searchErrorMessage = null;
-        Users.searchUsers({name: attrs.user, 
+        Users.searchUsers({user: attrs.user, 
         	radius: attrs.radius ? String(attrs.radius) : undefined, 
         	limit: attrs.limit? String(attrs.limit) : undefined, 
         	})
         .then((result) => {
-            console.log("doSearchUser: ", result)
+            console.log("doSearchUser results: ", result)
             this.addMarkers(Users.list)
         })
-        /*
-        this.http.get(this.loadSearchUser, {params: params, headers: headers})
-        .subscribe(
-                data => {
-                    console.log('getUser data=', data);
-                    this.info = data[0];
-                    // console.log('home info=', this.info);
-                    this.searchLocation = this.info.location;
-                    this.getIconUrl(this.info);
-                    // this.positions.push({latlng: [Number(this.info.geo.latitude), Number(this.info.geo.longitude)], item: this.info});
-                    console.log('initial position=', this.positions);
-                    if (this.info.geo.latitude) {
-                        this.mapCenter = {lat: Number(this.info.geo.latitude), lng: Number(this.info.geo.longitude)};
-                    } else {
-                        this.mapCenter = {lat: Number(this.lat), lng: Number(this.lng)};
-                    }
-                    console.log('mapCenter=', this.mapCenter);
-                    this.foundUser = true;
-                    this.doSearchLocation(this.searchLocation);
-                }, (err: HttpErrorResponse) => {
-                    if (err.error instanceof Error) {
-                        console.log('doSearchUser client error=', err);
-                        this.searchErrorMessage = err['error']['message'];
-                        this.foundUser = false;
-                      } else {
-                          console.log('doSearchUser server error=', err);
-                          this.searchErrorMessage = err['error']['message'];
-                          this.foundUser = false;
-                      }
-                    });
-                    */
     },
 
    /**
     * @param center - either null or an address
     */
-    doSearchLocation: function(center) {
-        console.log('reloading from Remote..., center=', center);
+    doSearchLocation: function(attrs) {
+    	console.log("doSearchLocation parms=", attrs)
         this.searchErrorMessage = null;
-        this.clearLocations();
-        let items;
-        /*
-        const headers = new HttpHeaders()
-            .set('X-Requested-With', 'XMLHttpRequest')
-            .set('responseType', 'json');
-        // console.log('added headers=', headers);
-        let params = null;
-        if (center) {
-            params = new HttpParams().set('address', center)
-                .set('radius', String(this.searchRadius))
-                .set('limit', String(this.searchLimit));
-            console.log('reload params=', params);
-        }
-        this.http.get(this.loadSearchLocation, {params: params, headers: headers})
-        .subscribe(
-                data => {
-                    console.log('remote data=', data);
-                    items = data;
-                    this.users = items;
-                    // console.log('load items=', items);
-                    let firstItem = true;
-                    for (const item of items) {
-                        // console.log('insert new ', item);
-                        if (firstItem) {
-                            this.mapCenter = {lat: Number(item.geo.latitude), lng: Number(item.geo.longitude)};
-                            firstItem = false;
-                        }
-                        this.getIconUrl(item);
-                        this.info = {id: item.id,
-                                geo: {latitude: Number(item.geo.latitude),
-                                    longitude: Number(item.geo.longitude)},
-                                display: true,
-                                color: item.color,
-                                forum_name: item.forum,
-                                location: item.location,
-                                iconUrl: item.iconUrl,
-                                label: null,
-                        };
-                        if (item.geo.latitude) {
-                            this.positions.push({latlng: [Number(item.geo.latitude), Number(item.geo.longitude)], item: item});
-                        }
-                        this.selectOptions.push([item.id, item.forum, item.iconUrl]);
-                        // this.updateItem(item, true);
-                    }
-                    // map won't have markers yet, so wait a bit to set bounds
-                    setTimeout(() => {
-                        console.log('Async Task Calling Callback');
-                        this.fitBounds(this.map);
-                      }, 500);
-                    // console.log('selectOptions=', this.selectOptions);
-                },
-                (err: HttpErrorResponse) => {
-                    if (err.error instanceof Error) {
-                        console.log('doSearchUser client error=', err);
-                        this.searchErrorMessage = err['error']['message'];
-                        this.foundUser = false;
-                      } else {
-                          console.log('doSearchUser server error=', err);
-                          this.searchErrorMessage = err['error']['message'];
-                          this.foundUser = false;
-                      }
-                    });
-                    */
+        Users.searchUsers({location: attrs.location, 
+        	radius: attrs.radius ? String(attrs.radius) : undefined, 
+        	limit: attrs.limit? String(attrs.limit) : undefined, 
+        	})
+        .then((result) => {
+            console.log("doSearchLocation: ", result)
+            this.addMarkers(Users.list)
+        })
     },
     search: function(searchParms) {
 		console.log("search map parms=", searchParms)
@@ -282,9 +195,9 @@ var UserMap = {
 		this.clearLocations()
 		this.searchParms = searchParms  // for use in then statements
 		if (searchParms.location) {
-			this.doSearchLocation(this.searchParms).bind(this)
+			this.doSearchLocation(this.searchParms)
 		} else if (searchParms.user) {
-			this.doSearchUser(this.searchParms).bind(this)
+			this.doSearchUser(this.searchParms)
 		}
 	},
 	oncreate: function(vnode) {

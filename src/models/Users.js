@@ -10,7 +10,7 @@ var crashersJson = `
 			"forum": "Ilona",
 			"name": "Ilona Ciunaite",
 			"role": "guide",
-			"color": "red",
+			"color": "ff0000",
 			"location": "Playa del Carmen, Quintana Roo, Mexico",
 			"distance": 5000,
 			"geo": {
@@ -24,7 +24,7 @@ var crashersJson = `
 			"forum": "jjm109",
 			"name": "James Myers",
 			"role": "crasher",
-			"color": "blue",
+			"color": "0000ff",
 			"location": "Paradise, CA, USA",
 			"distance": 0,
 			"geo": {
@@ -38,7 +38,7 @@ var crashersJson = `
             "forum": "forgetmenot",
             "name": "Kay Nieminen",
             "role": "guide",
-            "color": "red",
+            "color": "ff0000",
             "location": "Australia",
             "distance": 15000,
             "geo": {
