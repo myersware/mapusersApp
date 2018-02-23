@@ -11,11 +11,8 @@
   },
   "private": true,
   "dependencies": {
-    "@material/drawer": "^0.30.0",
-    "@material/toolbar": "^0.30.0",
     "es6-shim": "^0.35.3",
     "fontawesome-markers": "^4.6.1",
-    "material-components-web": "^0.30.0",
     "mithril": "^1.1.6",
     "polythene-css": "^1.0.0",
     "polythene-mithril": "^1.0.0",

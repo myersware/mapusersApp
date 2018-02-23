@@ -1,9 +1,11 @@
 var m = require("mithril")
 var Stream = require("mithril/stream")
 const {Form, Field, ValidationError} = require("powerform")
-import { RaisedButton, Slider, TextField, Toolbar, ToolbarTitle, List, ListTile, Icon, SVG, IconButton } from "polythene-mithril"
+import { RaisedButton, Slider, TextField, Toolbar, ToolbarTitle, List, ListTile, Icon } from "polythene-mithril"
 import "polythene-css/dist/polythene.css"   // Component CSS
 import "polythene-css/dist/polythene-typography.css"  // Default Material Design styles including Roboto font
+import "polythene-css/dist/polythene-raised-button.css"
+import { RaisedButtonCSS } from "polythene-css"
 var UserMap = require("./UserMap")
 var Users = require("../models/Users")
   
@@ -118,6 +120,12 @@ class UserControl {
 			    return this.showList ? list : tb
 			}
 		}
+		RaisedButtonCSS.addStyle(".themed-button", {
+			  color_light_text:       "#fff",
+			  color_light_background: "#ff1744",
+			  color_dark_text:        "#fff",
+			  color_dark_background:  "#c51162"
+			});
 		return m(".ui#page", [
 				m(".ui#header", m(SelectUser)),
 				m(".ui#content", [
@@ -138,7 +146,7 @@ class UserControl {
 						    ]),
 					    m(".row", [
 							m(RaisedButton, {
-								className: "mdl-button.mdl-js-button.mdl-button--colored",
+								className: "themed-button",
 								events: {
 									onclick: this.submit.bind(this),
 								},
@@ -157,6 +165,7 @@ class UserControl {
 						]),
 						m(".row", [
 							m(RaisedButton, {
+								className: "themed-button",
 								events: {
 									onclick: this.submit.bind(this),
 								},
